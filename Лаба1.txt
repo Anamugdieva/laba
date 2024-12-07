@@ -1,0 +1,73 @@
+#include <iostream>
+#include <cmath>
+#include <stdexcept>
+#include <string>
+using namespace std;
+class CustomException : public exception {
+private:
+    string message;
+    double value;
+    int errorCode;
+
+public:
+    CustomException(const string& msg, double val, int code)
+        : message(msg), value(val), errorCode(code) {}
+
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+
+    double getValue() const {
+        return value;
+    }
+
+    int getErrorCode() const {
+        return errorCode;
+    }
+};
+
+void calculateZ1(double& a, double& result) {
+    if (a <= 0) {
+        throw CustomException("Ошибка: a должно быть больше 0", a, 1);
+    }
+    double sqrt2a = sqrt(2 * a);
+    if (sqrt2a == 0  (a + 2) == 0) {
+        throw CustomException("Ошибка: деление на ноль", a, 2);
+    }
+    result = ((a + 2) / sqrt(2*a) - a / (sqrt(2*a) + 2) + 2 / (a - sqrt(2*a))) * ((sqrt(a) - sqrt(2)) / (a + 2));
+}
+
+void calculateZ2(double& a, double& result) {
+    if (a <= 0) {
+        throw CustomException("Ошибка: a должно быть больше 0", a, 1);
+    }
+    double sqrtA = sqrt(a);
+    if (sqrtA + sqrt(2) == 0) {
+        throw CustomException("Ошибка: деление на ноль", a, 2);
+    }
+    result = 1 / (sqrtA + sqrt(2));
+}
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    double a = 3; // Пример значения
+    double Z1, Z2;
+
+    try {
+        calculateZ1(a, Z1);
+        calculateZ2(a, Z2);
+        cout << "Z1: " << Z1 << ", Z2: " << Z2 << endl;
+
+        if (fabs(Z1 - Z2) < 1e-5) {
+            cout << "Z1 и Z2 приблизительно одинаковы." << endl;
+        }
+        else {
+            cout << "Z1 и Z2 различаются." << endl;
+        }
+    }
+    catch (const CustomException& e) {
+        cerr << "Произошла ошибка: " << e.what() << ", значение: " << e.getValue() << ", код ошибки: " << e.getErrorCode() << endl;
+    }
+
+    return 0;
+}
