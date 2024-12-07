@@ -1,0 +1,138 @@
+
+#ifndef SMART_PTR_H
+#define SMART_PTR_H
+
+#include <iostream>
+
+template <typename T>
+class SmartPtr {
+private:
+    T* ptr;
+public:
+    SmartPtr(T* p = nullptr) : ptr(p) {}
+    SmartPtr(const SmartPtr& other) : ptr(other.ptr) {}
+    SmartPtr(SmartPtr&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
+    ~SmartPtr() { delete ptr; }
+
+    SmartPtr& operator=(const SmartPtr& other) {
+        if (this != &other) {
+            delete ptr;
+            ptr = other.ptr;
+        }
+        return *this;
+    }
+    SmartPtr& operator=(SmartPtr&& other) noexcept {
+        if (this != &other) {
+            delete ptr;
+            ptr = other.ptr;
+            other.ptr = nullptr;
+        }
+        return *this;
+    }
+
+    T& operator*() const { return *ptr; }
+    T* operator->() const { return ptr; }
+    bool isNull() const { return ptr == nullptr; }
+};
+
+#endif
+
+
+
+#ifndef EXCEPTION_H
+#define EXCEPTION_H
+
+#include <string>
+#include <exception>
+
+class StackException : public std::exception {
+private:
+    std::string message;
+public:
+    explicit StackException(const std::string& msg) : message(msg) {}
+    const char* what() const noexcept override { return message.c_str(); }
+};
+
+#endif
+
+
+#ifndef STACK_H
+#define STACK_H
+
+#include <vector>
+#include <initializer_list>
+template <typename T>
+class Stack {
+private:
+    SmartPtr<std::vector<T>> data;
+public:
+    Stack() : data(new std::vector<T>()) {}
+    Stack(const std::initializer_list<T>& list) : data(new std::vector<T>(list)) {}
+    Stack(const Stack& other) : data(new std::vector<T>(*other.data)) {}
+    Stack(Stack&& other) noexcept : data(std::move(other.data)) {}
+    ~Stack() = default;
+
+
+    Stack& operator=(const Stack& other) {
+        if (this != &other) {
+            data = SmartPtr<std::vector<T>>(new std::vector<T>(*other.data));
+        }
+        return *this;
+    }
+    Stack& operator=(Stack&& other) noexcept {
+        if (this != &other) {
+            data = std::move(other.data);
+        }
+        return *this;
+    }
+
+    void push(const T& value) { data->push_back(value); }
+    void push(T&& value) { data->push_back(std::move(value)); }
+    T pop() {
+        if (data->empty()) throw StackException("Stack is empty");
+        T top = data->back();
+        data->pop_back();
+        return top;
+    }
+    T& top() {
+        if (data->empty()) throw StackException("Stack is empty");
+        return data->back();
+    }
+    bool empty() const { return data->empty(); }
+    size_t size() const { return data->size(); }
+};
+
+#endif
+
+
+#include <iostream>
+#include <string>
+int main() {
+    Stack<int> intStack;
+    intStack.push(10);
+    intStack.push(20);
+    std::cout << "Int Stack top: " << intStack.top() << std::endl;
+    intStack.pop();
+    std::cout << "Int Stack size: " << intStack.size() << std::endl;
+
+    Stack<double> doubleStack = { 1.1, 2.2, 3.3 };
+    std::cout << "Double Stack top: " << doubleStack.top() << std::endl;
+
+    Stack<std::string> stringStack;
+    stringStack.push("Hello");
+    stringStack.push("World");
+    std::cout << "String Stack top: " << stringStack.top() << std::endl;
+
+
+    try {
+        int x = intStack.pop();
+        std::cout << x << std::endl;
+        int y = intStack.pop();
+        std::cout << y << std::endl;
+    }
+    catch (const StackException& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
