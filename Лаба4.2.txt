@@ -1,0 +1,57 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <limits>
+
+using namespace std;
+
+int main() {
+    setlocale(LC_ALL, "Russian");
+    // Открываем входной файл для чтения
+    ifstream inputFile("input.txt");
+    if (!inputFile.is_open()) {
+        cerr << "Не удалось открыть входной файл!" << endl;
+        return 1;
+    }
+
+    vector<double> numbers;
+    double number;
+
+    // Считываем числа из файла
+    while (inputFile >> number) {
+        numbers.push_back(number);
+    }
+
+    inputFile.close();
+
+    // Проверяем, есть ли считанные числа
+    if (numbers.empty()) {
+        cerr << "Файл пуст или содержит недопустимые данные!" << endl;
+        return 1;
+    }
+
+    // Находим минимальное число
+    double minValue = numeric_limits<double>::max();
+    for (const auto& num : numbers) {
+        if (num < minValue) {
+            minValue = num;
+        }
+    }
+
+    // Открываем выходной файл для записи
+    ofstream outputFile("output.txt");
+    if (!outputFile.is_open()) {
+        cerr << "Не удалось открыть выходной файл!" << endl;
+        return 1;
+    }
+
+    // Записываем в выходной файл каждое число, умноженное на минимальное
+    for (const auto& num : numbers) {
+        outputFile << num * minValue << endl;
+    }
+
+    outputFile.close();
+
+    cout << "Данные успешно записаны в выходной файл." << endl;
+    return 0;
+}
