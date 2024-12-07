@@ -1,0 +1,45 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+#include <limits>
+
+using namespace std;
+
+void solveQuadraticEquation(double a, double b, double c) {
+    double discriminant = b * b - 4 * a * c;
+
+    if (discriminant > 0) {
+        double root1 = (-b + sqrt(discriminant)) / (2 * a);
+        double root2 = (-b - sqrt(discriminant)) / (2 * a);
+        cout << "Roots are real and different:\n";
+        cout << "Root 1: " << setw(10) << setprecision(4) << fixed << root1 << endl;
+        cout << "Root 2: " << setw(10) << setprecision(4) << fixed << root2 << endl;
+    } else if (discriminant == 0) {
+        double root = -b / (2 * a);
+        cout << "Roots are real and the same:\n";
+        cout << "Root: " << setw(10) << setprecision(4) << fixed << root << endl;
+    } else {
+        cout << "Roots are complex and different.\n";
+        double realPart = -b / (2 * a);
+        double imaginaryPart = sqrt(-discriminant) / (2 * a);
+        cout << "Root 1: " << setw(10) << setprecision(4) << fixed << realPart << " + " << imaginaryPart << "i" << endl;
+        cout << "Root 2: " << setw(10) << setprecision(4) << fixed << realPart << " - " << imaginaryPart << "i" << endl;
+    }
+}
+
+int main() {
+    double a, b, c;
+
+    cout << "Enter coefficients a, b and c: ";
+    cin >> a >> b >> c;
+
+    // Проверка на ноль для коэффициента a
+    if (a == 0) {
+        cout << "Coefficient 'a' cannot be zero." << endl;
+        return 1;
+    }
+
+    solveQuadraticEquation(a, b, c);
+
+    return 0;
+}
