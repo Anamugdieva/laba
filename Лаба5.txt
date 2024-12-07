@@ -1,0 +1,184 @@
+#include <initializer_list>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+namespace containers {
+
+    template <typename T>
+    class NameClass {
+    public:
+        struct Node {
+            T value;
+            Node* next = nullptr; // Связь со следующим элементом
+            Node* prev = nullptr; // Связь с предыдущим элементом
+
+            // Приватный конструктор
+            Node(const T& val) : value(val) {}
+
+            // Другое
+            Node() = delete; // Запрет на создание "пустого" узла
+        };
+
+    private:
+        Node* head;
+        Node* tail;
+        size_t size;
+
+    public:
+        NameClass() : head(nullptr), tail(nullptr), size(0) {} // Конструктор по умолчанию
+
+        NameClass(std::initializer_list<T> init) : NameClass() {
+            for (const auto& value : init) {
+                add(value);
+            }
+        }
+
+        NameClass(const NameClass& other) : NameClass() {
+            for (size_t i = 0; i < other.size; ++i) {
+                add(other.at(i));
+            }
+        }
+
+        NameClass& operator=(const NameClass& other) {
+            if (this != &other) {
+                clear();
+                for (size_t i = 0; i < other.size; ++i) {
+                    add(other.at(i));
+                }
+            }
+            return *this;
+        }
+
+        NameClass(NameClass&& other) noexcept
+            : head(other.head), tail(other.tail), size(other.size) {
+            other.head = nullptr;
+            other.tail = nullptr;
+            other.size = 0;
+        }
+
+        NameClass& operator=(NameClass&& other) noexcept {
+            if (this != &other) {
+                clear();
+                head = other.head;
+                tail = other.tail;
+                size = other.size;
+                other.head = nullptr;
+                other.tail = nullptr;
+                other.size = 0;
+            }
+            return *this;
+        }
+
+        ~NameClass() { clear(); }
+
+        T& at(size_t index) {
+            if (index >= size) throw std::out_of_range("Index out of range");
+            Node* current = head;
+            for (size_t i = 0; i < index; ++i) current = current->next;
+            return current->value;
+        }
+
+        void add(const T& value) {
+            Node* newNode = new Node(value);
+            if (tail) {
+                tail->next = newNode;
+                newNode->prev = tail;
+            }
+            else {
+                head = newNode;
+            }
+            tail = newNode;
+            size++;
+        }
+
+        void removeLast() {
+            if (size == 0) throw std::out_of_range("Collection is empty");
+            Node* temp = tail;
+            tail = tail->prev;
+            if (tail) tail->next = nullptr;
+            else head = nullptr;
+            delete temp;
+            size--;
+        }
+
+        void clear() {
+            while (size > 0) removeLast();
+        }
+
+        size_t getSize() const { return size; }
+
+        // Пример итератора (обход положительных элементов)
+        class PositiveIterator {
+        private:
+            Node* current;
+
+        public:
+            PositiveIterator(Node* start) : current(start) {}
+
+            T& operator*() { return current->value; }
+
+            PositiveIterator& operator++() {
+                do {
+                    current = current->next;
+                } while (current && current->value <= 0);
+                return *this;
+            }
+
+            bool operator!=(const PositiveIterator& other) const {
+                return current != other.current;
+            }
+        };
+
+        PositiveIterator begin() {
+            Node* start = head;
+            while (start && start->value <= 0) {
+                start = start->next;
+            }
+            return PositiveIterator(start);
+        }
+
+        PositiveIterator end() { return PositiveIterator(nullptr); }
+    };
+    } // namespace containers
+    class CustomException : public std::exception {
+    private:
+        std::string message;
+
+    public:
+        explicit CustomException(const std::string& msg) : message(msg) {}
+
+        virtual const char* what() const noexcept override {
+            return message.c_str();
+        }
+    };
+    int main() {
+        using namespace containers;
+
+        NameClass<int> intCollection{ 1, -2, 3, -4, 5 };
+
+        // Вывод положительных элементов
+        std::cout << "Positive elements:\n";
+        for (auto it = intCollection.begin(); it != intCollection.end(); ++it) {
+            std::cout << *it << " ";
+        }
+        std::cout << std::endl;
+
+        // Тестирование исключений
+        try {
+            intCollection.removeLast();
+            std::cout << "Element removed. New size: " << intCollection.getSize() << std::endl;
+            for (size_t i = 0; i < intCollection.getSize(); ++i) {
+                std::cout << intCollection.at(i) << " ";
+            }
+            std::cout << std::endl;
+
+            // Обращение к несуществующему элементу
+            intCollection.at(10);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+        }
+
+        return 0;
+    }
