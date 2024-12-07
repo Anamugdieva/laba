@@ -1,0 +1,96 @@
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <vector>
+
+// Структура для хранения данных о окружности
+struct Circle {
+    sf::CircleShape shape;
+    sf::Color fillColor;
+
+    Circle(float radius, const sf::Vector2f& position) {
+        shape.setRadius(radius);
+        shape.setPosition(position);
+        shape.setFillColor(sf::Color::Transparent);
+        shape.setOutlineColor(sf::Color::White);
+        shape.setOutlineThickness(1);
+    }
+};
+
+int main() {
+    // Создаем окно
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Circle Drawer");
+
+    // Вектор для хранения всех окружностей
+    std::vector<Circle> circles;
+
+    // Текущая окружность
+    Circle* currentCircle = nullptr;
+    bool isDrawing = false; // Флаг для проверки, рисуем ли мы сейчас
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            // Обработка нажатия мыши
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                isDrawing = true;
+                // Запоминаем позицию мыши и создаем новый круг
+                currentCircle = new Circle(0, sf::Vector2f(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)));
+            }
+
+            // Обработка отпускания мыши
+            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) {
+                if (isDrawing && currentCircle) {
+                    isDrawing = false;
+
+                    // Задаем случайный цвет для заливки окружности
+                    sf::Color randomColor(
+                        static_cast<sf::Uint8>(rand() % 256),
+                        static_cast<sf::Uint8>(rand() % 256),
+                        static_cast<sf::Uint8>(rand() % 256)
+                    );
+                    currentCircle->shape.setFillColor(randomColor);
+                    currentCircle->fillColor = randomColor;
+
+                    // Определяем радиус окружности
+                    float radius = std::max(static_cast<float>(event.mouseButton.x) - currentCircle->shape.getPosition().x,
+                        static_cast<float>(event.mouseButton.y) - currentCircle->shape.getPosition().y) / 2.0f;
+
+                    currentCircle->shape.setRadius(radius);
+                    circles.push_back(*currentCircle);
+                    delete currentCircle; // Освобождаем память
+                    currentCircle = nullptr;
+                }
+            }
+
+            // Обработка нажатия клавиши для выхода
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                window.close();
+            }
+        }
+
+        // Обновление текущей окружности при движении мыши
+        if (isDrawing && currentCircle) {
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            float radius = std::hypot(static_cast<float>(mousePos.x) - currentCircle->shape.getPosition().x,
+                static_cast<float>(mousePos.y) - currentCircle->shape.getPosition().y);
+            currentCircle->shape.setRadius(radius);
+        }
+
+        // Отрисовка
+        window.clear();
+        for (const auto& circle : circles) {
+            window.draw(circle.shape);
+        }
+
+        if (isDrawing && currentCircle) {
+            window.draw(currentCircle->shape);
+        }
+
+        window.display();
+    }
+
+    return 0;
+}
